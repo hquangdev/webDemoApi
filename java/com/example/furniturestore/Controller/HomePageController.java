@@ -5,10 +5,13 @@ import com.example.furniturestore.Entity.Category;
 import com.example.furniturestore.Entity.Product;
 import com.example.furniturestore.Repotitory.CategoryRepo;
 import com.example.furniturestore.Repotitory.ProductRepo;
+import com.example.furniturestore.Service.ProductService;
+import com.example.furniturestore.dto.ReqRes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.HashMap;
@@ -24,6 +27,9 @@ public class HomePageController {
     @Autowired
     private CategoryRepo categoryRepo;
 
+    @Autowired
+    private ProductService productService;
+
     @GetMapping("/content")
     public ResponseEntity<Object> listContent(){
         List<Product> products = productRepo.findAll();
@@ -34,7 +40,16 @@ public class HomePageController {
         response.put("products", products);
         response.put("categories", categories);
 
-        // Trả về phản hồi chứa cả sản phẩm và danh mục
         return ResponseEntity.ok(response);
+    }
+
+    //tim kiem va loc san pham
+
+    @GetMapping("/search")
+    public ReqRes searchProducts(
+            @RequestParam String name,
+            @RequestParam double minPrice,
+            @RequestParam double maxPrice) {
+        return productService.searchProducts(name, minPrice, maxPrice);
     }
 }

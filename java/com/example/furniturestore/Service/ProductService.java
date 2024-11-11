@@ -4,6 +4,7 @@ import com.example.furniturestore.Entity.Category;
 import com.example.furniturestore.Entity.Product;
 import com.example.furniturestore.Repotitory.CategoryRepo;
 import com.example.furniturestore.Repotitory.ProductRepo;
+import com.example.furniturestore.dto.ReqRes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -117,6 +118,25 @@ public class ProductService {
             return "Tệp đã được xóa thành công: " + fileName;
         }
         return deleteFile.exists() ? "Không thể xóa tệp: " + fileName : "Không tìm thấy tệp: " + fileName;
+    }
+
+    //tim va loc san pham
+
+    public ReqRes searchProducts(String name, double minPrice, double maxPrice) {
+        List<Product> products = productRepo.findByNameContainingAndPriceBetween(name, minPrice, maxPrice);
+
+        ReqRes response = new ReqRes();
+
+        if (products.isEmpty()) {
+            response.setStatusCode(404);
+            response.setMessage("Không tìm thấy sản phẩm nào khớp với tên và giá đã chọn.");
+        } else {
+            response.setStatusCode(200);
+            response.setMessage("Tìm thấy " + products.size() + " sản phẩm.");
+            response.setData(products);
+        }
+
+        return response;
     }
 
 }

@@ -8,6 +8,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Objects;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -23,6 +24,7 @@ public class ReqRes {
     private String name;
     private String email;
     private String role;
+    private Object  data;
 
     @Size(min = 8, message = "Mật khẩu phải đủ 8 kí tự")
     private String password;
