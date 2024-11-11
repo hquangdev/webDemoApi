@@ -36,16 +36,16 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(request -> request
-                        .requestMatchers("/auth/signin","/images/**", "/assets/**", "/home/**").permitAll()
+                        .requestMatchers("/auth/login","/auth/register","/auth/verify", "/images/**", "/assets/**", "/home/**").permitAll()
                         .requestMatchers("/views/**").permitAll()
 
                         .requestMatchers("/admin/**").hasAuthority("ADMIN")
                         .requestMatchers("/user/**").hasAuthority("USER")
                         .anyRequest().authenticated()
                 )
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(customAuthenticationEntryPoint())
-                )
+//                .exceptionHandling(exception -> exception
+//                        .authenticationEntryPoint(customAuthenticationEntryPoint())
+//                )
                 .sessionManagement(manager -> manager
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
@@ -55,10 +55,10 @@ public class SecurityConfig {
         return httpSecurity.build();
     }
 
-    @Bean
-    public AuthenticationEntryPoint customAuthenticationEntryPoint() {
-        return (request, response, authException) -> response.sendRedirect("/home/login"); // Chuyển hướng tới trang login
-    }
+//    @Bean
+//    public AuthenticationEntryPoint customAuthenticationEntryPoint() {
+//        return (request, response, authException) -> response.sendRedirect("/home/login");
+//    }
 
     @Bean
     public AuthenticationProvider authenticationProvider() {

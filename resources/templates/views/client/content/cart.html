@@ -49,20 +49,20 @@
                 </div><!-- End .col-lg-9 -->
                 <aside class="col-lg-4">
 
-          <!---------- Thông tin khách hàng----------- -->
+                    <!---------- Thông tin khách hàng----------- -->
                     <div class="summary summary-cart">
                         <tr class="summary-subtotal">
                             <td>Tổng tiền: </td>
-                            <td th:text="${#numbers.formatDecimal(totalAmount, 0, 0)}"></td>
+                            <td id="totalAmount">0 VND</td> <!-- Chỗ này sẽ được cập nhật bằng JS -->
                         </tr>
                         <form action="/home/checkout" method="post">
                             <div class="form-group">
                                 <label for="customerName">Họ và tên:</label>
-                                <input type="text" id="customerName" name="name" class="form-control" required th:value="${username}">
+                                <input type="text" id="customerName" name="name" class="form-control" required>
                             </div>
                             <div class="form-group">
                                 <label for="customerEmail">Email:</label>
-                                <input type="email" id="customerEmail" name="email" class="form-control" required th:value="${email}">
+                                <input type="email" id="customerEmail" name="email" class="form-control" required>
                             </div>
                             <div class="form-group">
                                 <label for="customerPhone">Số điện thoại:</label>
@@ -77,23 +77,23 @@
                                 <input type="text" id="customernote" name="note" class="form-control">
                             </div>
 
-                            <!-- Kiểm tra nếu username tồn tại trong session -->
-                            <div th:if="${session.username != null}">
-                                <button type="submit" class="btn btn-outline-primary-2 btn-order btn-block">
-                                    Xác nhận thanh toán
-                                </button>
-                            </div>
-                            <!-- Nếu username không tồn tại, hiển thị nút đăng nhập -->
-                            <div th:if="${session.username == null}">
+                            <!-- Kiểm tra nếu người dùng đã đăng nhập -->
+                            <div id="loginRequired" style="display: none;">
                                 <a href="/home/login" class="btn btn-outline-primary-2 btn-order btn-block">
                                     Bạn cần đăng nhập
                                 </a>
                             </div>
 
-                            <input type="hidden" name="productId" th:value="${product.id}"/>
+                            <div id="checkoutButton" style="display: none;">
+                                <button type="submit" class="btn btn-outline-primary-2 btn-order btn-block">
+                                    Xác nhận thanh toán
+                                </button>
+                            </div>
 
+                            <input type="hidden" name="productId" /> <!-- Sử dụng JS để cập nhật giá trị này nếu cần -->
                         </form>
                     </div><!-- End .summary -->
+
 
 
                 </aside><!-- End .col-lg-3 -->
@@ -113,7 +113,7 @@
             return;
         }
 
-        cartContainer.innerHTML = ''; // Xóa nội dung cũ
+        cartContainer.innerHTML = '';
 
         // Gửi yêu cầu GET đến API để lấy giỏ hàng
         fetch('/home/cart/list')
@@ -179,6 +179,90 @@
     // Gọi hàm hiển thị giỏ hàng khi trang được tải
     document.addEventListener('DOMContentLoaded', function () {
         displayCart(); // Gọi hàm hiển thị giỏ hàng
+    });
+
+
+
+    //thanh toán
+
+        document.addEventListener('DOMContentLoaded', function () {
+        // Kiểm tra xem người dùng đã đăng nhập chưa (dựa trên token trong localStorage)
+        const token = localStorage.getItem('token');
+        const checkoutButton = document.getElementById('checkoutButton');
+        const loginRequired = document.getElementById('loginRequired');
+
+        // Lấy thông tin giỏ hàng và cập nhật tổng tiền
+        const cart = JSON.parse(localStorage.getItem('cart')) || [];
+        const totalAmount = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+        // Cập nhật tổng tiền trong giao diện
+        document.getElementById('totalAmount').textContent = `${totalAmount} VND`;
+
+        // Kiểm tra xem người dùng đã đăng nhập chưa
+        if (token) {
+        // Nếu người dùng đã đăng nhập, hiển thị nút thanh toán
+        checkoutButton.style.display = 'block';
+        loginRequired.style.display = 'none';
+
+        // Cập nhật thông tin người dùng vào form (nếu có)
+        const userInfo = JSON.parse(localStorage.getItem('userInfo')) || {};  // Giả sử bạn đã lưu thông tin người dùng vào localStorage
+        document.getElementById('customerName').value = userInfo.name || '';
+        document.getElementById('customerEmail').value = userInfo.email || '';
+    } else {
+        // Nếu người dùng chưa đăng nhập, hiển thị nút yêu cầu đăng nhập
+        checkoutButton.style.display = 'none';
+        loginRequired.style.display = 'block';
+    }
+
+        // Xử lý gửi yêu cầu thanh toán
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function (event) {
+        event.preventDefault();  // Ngừng hành động submit mặc định
+
+        // Lấy thông tin từ form
+        const name = document.getElementById('customerName').value;
+        const email = document.getElementById('customerEmail').value;
+        const phone = document.getElementById('customerPhone').value;
+        const address = document.getElementById('customerAddress').value;
+        const note = document.getElementById('customernote').value;
+
+        // Tạo dữ liệu cho request
+        const orderData = {
+        name: name,
+        email: email,
+        phone: phone,
+        address: address,
+        notes: note,
+        totalPrice: totalAmount,  // Sử dụng tổng tiền đã tính từ giỏ hàng
+        status: "pending",  // Hoặc trạng thái đơn hàng khác nếu có
+        items: cart.map(item => ({
+        productId: item.productId,
+        quantity: item.quantity,
+        price: item.price
+    }))
+    };
+
+        // Gửi yêu cầu thanh toán
+        fetch('/user/orders', {
+        method: 'POST',
+        headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`  // Nếu cần gửi token xác thực
+    },
+        body: JSON.stringify(orderData)
+    })
+        .then(response => response.json())
+        .then(data => {
+        // Xử lý khi tạo đơn hàng thành công (ví dụ: chuyển hướng đến trang xác nhận)
+        console.log('Đơn hàng đã được tạo:', data);
+        alert('Đơn hàng của bạn đã được tạo thành công!');
+        window.location.href = '/home/order-confirmation';  // Điều hướng đến trang xác nhận
+    })
+        .catch(error => {
+        console.error('Có lỗi xảy ra:', error);
+        alert('Đã có lỗi xảy ra. Vui lòng thử lại.');
+    });
+    });
     });
 
 </script>

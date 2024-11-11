@@ -18,7 +18,6 @@ public class CategoryController {
     @GetMapping("/list")
     public ResponseEntity<List<Category>> listCategory() {
         List<Category> list = categoryService.getAllCategory();
-
         return ResponseEntity.ok(list);
     }
 

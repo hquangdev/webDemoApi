@@ -3,6 +3,8 @@ package com.example.furniturestore.Controller;
 import com.example.furniturestore.Entity.Order;
 import com.example.furniturestore.Entity.OrderItem;
 import com.example.furniturestore.Entity.OrderRequest;
+import com.example.furniturestore.Service.CartService;
+import com.example.furniturestore.Service.CategoryService;
 import com.example.furniturestore.Service.OrderService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,10 +22,11 @@ public class OrderController {
     private OrderService orderService;
 
     @Autowired
-    private HttpSession httpSession;
+    private CartService cartService;
 
     @PostMapping("/user/orders")
     public Order createOrder(@RequestBody OrderRequest request) {
+
         // Tạo đơn hàng từ request
         Order order = new Order();
         order.setName(request.getName());
@@ -35,14 +38,14 @@ public class OrderController {
         order.setStatus(request.getStatus());
 
         // Lấy giỏ hàng từ session
-        Map<String, Object> cart = (Map<String, Object>) httpSession.getAttribute("CART");
+        Map<String, Object> cart = cartService.getCart();
 
         List<OrderItem> orderItems = new ArrayList<>();
         if (cart != null) {
             for (Map.Entry<String, Object> entry : cart.entrySet()) {
                 Map<String, Object> itemData = (Map<String, Object>) entry.getValue();
                 OrderItem orderItem = new OrderItem();
-                orderItem.setProductId((int) Long.parseLong(entry.getKey()));
+                orderItem.setProductId((int) Long.parseLong(entry.getKey()));  // Convert từ String sang Long
                 orderItem.setQuantity((int) itemData.get("quantity"));
                 orderItem.setPrice((double) itemData.get("price"));
                 orderItems.add(orderItem);

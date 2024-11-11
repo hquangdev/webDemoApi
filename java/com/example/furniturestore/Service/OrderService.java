@@ -19,15 +19,15 @@ public class OrderService {
     @Autowired
     private OrderItemRepository orderItemRepository;
 
-    @Transactional
+    // Phương thức tạo đơn hàng
     public Order createOrder(Order order, List<OrderItem> orderItems) {
-        // Lưu thông tin đơn hàng
+        // Lưu đơn hàng vào cơ sở dữ liệu
         Order savedOrder = orderRepository.save(order);
 
-        // Lưu các sản phẩm vào đơn hàng
-        for (OrderItem item : orderItems) {
-            item.setOrder(savedOrder);
-            orderItemRepository.save(item);
+        // Lưu các item trong đơn hàng
+        for (OrderItem orderItem : orderItems) {
+            orderItem.setOrder(savedOrder);
+            orderItemRepository.save(orderItem);
         }
 
         return savedOrder;
